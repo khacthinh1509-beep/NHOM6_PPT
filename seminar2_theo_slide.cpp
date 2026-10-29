@@ -2,7 +2,6 @@
 #include <iomanip>
 #include <vector>
 #include <cmath>
-#include <algorithm>
 #include <stdexcept>
 
 using namespace std;
@@ -45,16 +44,6 @@ void inDaThuc(const char* ten, const Day& heSo) {
     for(int k=n;k>=0;--k)
         cout << (abs(heSo[k])<1e-12L ? 0.0L : heSo[k]) << "  ";
     cout << '\n';
-}
-void inMoHinh(const Day& heSo) {
-    So a=heSo[0], b=heSo[1];
-    if(heSo.size()==2)
-        cout << "y=a+b*x: a=" << a << "; b=" << b << '\n';
-    else {
-        So c=heSo[2];
-        cout << "y=a+b*x+c*x^2: a=" << a
-                  << "; b=" << b << "; c=" << c << '\n';
-    }
 }
 void doiChieu(const char* ten, So may, So tay) {
     cout << ten << ": may=" << may << "; tay=" << tay
@@ -110,52 +99,6 @@ Day newton(const Day& x,const Day& y) {
     }
     return L_n;
 }
-Day gauss(Bang A,Day b) {
-    int n=static_cast<int>(b.size());
-    for(int k=0;k<n;++k) {
-        int r=k;
-        for(int i=k+1;i<n;++i) if(abs(A[i][k])>abs(A[r][k])) r=i;
-        if(abs(A[r][k])<1e-18L) throw runtime_error("He suy bien");
-        swap(A[k],A[r]);swap(b[k],b[r]);
-        for(int i=k+1;i<n;++i) {
-            So m=A[i][k]/A[k][k];
-            for(int j=k;j<n;++j) A[i][j]-=m*A[k][j];
-            b[i]-=m*b[k];
-        }
-    }
-    Day c(n,0);
-    for(int i=n-1;i>=0;--i) {
-        So s=b[i];for(int j=i+1;j<n;++j)s-=A[i][j]*c[j];
-        c[i]=s/A[i][i];
-    }
-    return c;
-}
-Day binhPhuongToiThieu(const Day& x,const Day& y,int bac) {
-    Bang A(bac+1,Day(bac+1,0));Day b(bac+1,0);
-    // A[k][j] = tong x_i^(k+j), b[k] = tong x_i^k*y_i.
-    for(size_t i=0;i<x.size();++i) {
-        Day mu(2*bac+1,1);
-        for(int j=1;j<=2*bac;++j)mu[j]=mu[j-1]*x[i];
-        for(int k=0;k<=bac;++k) {
-            b[k]+=mu[k]*y[i];
-            for(int j=0;j<=bac;++j)A[k][j]+=mu[k+j];
-        }
-    }
-    return gauss(A,b);
-}
-// Chuong 3: epsilon_i = y_i - f(x_i); S = tong epsilon_i^2.
-// RMSE la chi so bo sung. Chi so mang C++ bat dau tu 0.
-template<class Ham>
-So inSaiSo(const char* ten,const Day& x,const Day& y,Ham f) {
-    So S=0;
-    for(size_t i=0;i<x.size();++i) {
-        So epsilon_i=y[i]-f(x[i]);
-        S+=epsilon_i*epsilon_i;
-    }
-    cout << ten << ": S=" << S
-              << "; RMSE=" << sqrt(S/x.size()) << '\n';
-    return S;
-}
 void bai1() {
     cout << "\nBAI 1 - LAGRANGE\n";
     Day p=lagrange({0,1,3,5},{1,2,1,4});inDaThuc("p_3",p);
@@ -183,36 +126,6 @@ void bai4() {
     Day p=newton({-1,0,3,6,7},{3,-6,39,822,1611});inDaThuc("L_4",p);
     doiChieu("L_4(0.25)",giaTri(p,.25L),-1467.0L/256);
 }
-void bai5() {
-    cout << "\nBAI 5 - BON DANG XAP XI\n";
-    Day x{0,1,2,3,4,5,6,7},y{1.4L,1.3L,1.4L,1.1L,1.3L,1.8L,1.6L,2.3L};
-    for(int d:{1,2}) {
-        Day p=binhPhuongToiThieu(x,y,d);inMoHinh(p);
-        inSaiSo(d==1?"Bac 1":"Bac 2",x,y,[&](So t){return giaTri(p,t);});
-    }
-    Day Y;for(So t:y)Y.push_back(log(t));
-    Day heSo=binhPhuongToiThieu(x,Y,1);
-    So A=heSo[0], B=heSo[1];
-    So a=exp(A), b=B;
-    cout << "Y=ln(y), X=x; Y=A+B*X; A=" << A << "; B=" << B << '\n';
-    cout << "y=a*exp(b*x): a=" << a << "; b=" << b << '\n';
-    inSaiSo("Ham mu",x,y,[&](So t){return a*exp(b*t);});
-    Y.clear();for(So t:y)Y.push_back(exp(t));
-    heSo=binhPhuongToiThieu(x,Y,1); A=heSo[0]; B=heSo[1];
-    a=B; b=A;
-    cout << "Y=exp(y), X=x; Y=A+B*X; a=B, b=A\n";
-    cout << "y=ln(a*x+b): a=" << a << "; b=" << b << '\n';
-    inSaiSo("Ham logarit",x,y,[&](So t){return log(a*t+b);});
-    cout << "Bac hai co S nho nhat trong bon dang da khop.\n";
-}
-void bai6() {
-    cout << "\nBAI 6 - TAM THUC BAC HAI\n";
-    Day x{.78L,1.56L,2.34L,3.12L,3.81L},y{2.50L,1.20L,1.12L,4.28L,7.50L};
-    Day p=binhPhuongToiThieu(x,y,2);
-    // Bai 6 dat y=a*x^2+b*x+c: a=p[2], b=p[1], c=p[0].
-    cout << "y=a*x^2+b*x+c: a=" << p[2] << "; b=" << p[1] << "; c=" << p[0] << '\n';
-    inSaiSo("Bac 2",x,y,[&](So t){return giaTri(p,t);});
-}
 void bai7() {
     cout << "\nBAI 7 - SAI SO NOI SUY SIN\n";
     So pi=acos(-1.0L);Day x,y;
@@ -227,34 +140,17 @@ void bai7() {
               << fixed << setprecision(10);
     if(e>chan+1e-15L)throw runtime_error("Sai so vuot chan");
 }
-void bai8() {
-    cout << "\nBAI 8 - SO SANH BA DANG\n";
-    Day x{2,4,6,8,10,12},y{7.32L,8.24L,9.20L,10.19L,11.01L,12.05L};
-    for(int d:{1,2}) {
-        Day p=binhPhuongToiThieu(x,y,d);inMoHinh(p);
-        inSaiSo(d==1?"Bac 1":"Bac 2",x,y,[&](So t){return giaTri(p,t);});
-    }
-    // Dung lg (logarit co so 10) dung nhu slide chuong 3, trang 13.
-    Day X,Y;
-    for(So t:x) X.push_back(log10(t));
-    for(So t:y) Y.push_back(log10(t));
-    Day heSo=binhPhuongToiThieu(X,Y,1);
-    So A=heSo[0], B=heSo[1];
-    So a=pow(10.0L,A), b=B;
-    cout << "Y=lg(y), X=lg(x); Y=A+B*X\n";
-    cout << "A=" << A << "; B=" << B << "; a=10^A, b=B\n";
-    cout << "y=a*x^b: a=" << a << "; b=" << b << '\n';
-    inSaiSo("Luy thua",x,y,[&](So t){return a*pow(t,b);});
-    cout << "Bac 2 co S nho nhat; bac 1 gan tuong duong va don gian hon.\n";
-}
 int main() {
     cout << fixed << setprecision(10);
-    cout << "BAI 9 SEMINAR 2 - KIEM TRA CAC BAI 1 DEN 8\n";
-    cout << "Ky hieu: p_n, l_i (Lagrange); L_n (Newton); epsilon_i=y_i-f(x_i).\n";
-    cout << "S=tong epsilon_i^2; lg=log10; ln=log tu nhien.\n";
-    cout << "Cac dang phi tuyen duoc tuyen tinh hoa; S danh gia tren y goc.\n";
-    try {bai1();bai2();bai3();bai4();bai5();bai6();bai7();bai8();}
-    catch(const exception& e){cerr << "Loi: " << e.what() << '\n';return 1;}
-    cout << "\nHoan thanh 8 bai.\n";
+    cout << "BAI 9 SEMINAR 2 - CHUONG 2\n";
+    cout << "Cac bai 1, 2, 3, 4, 7: noi suy va sai so noi suy.\n";
+    cout << "Ky hieu: p_n, l_i (Lagrange); L_n (Newton).\n";
+    try {
+        bai1(); bai2(); bai3(); bai4(); bai7();
+    } catch(const exception& e) {
+        cerr << "Loi: " << e.what() << '\n';
+        return 1;
+    }
+    cout << "\nHoan thanh 5 bai thuoc Chuong 2.\n";
     return 0;
 }
