@@ -66,17 +66,6 @@ Day lagrange(const Day& x, const Day& y) {
     }
     return p_n;
 }
-So lagrangeTai(const Day& x,const Day& y,So t) {
-    So p_n=0;
-    int n=static_cast<int>(x.size())-1;
-    for(int i=0;i<=n;++i) {
-        So l_i=1;
-        for(int j=0;j<=n;++j)
-            if(i!=j) l_i*=(t-x[j])/(x[i]-x[j]);
-        p_n+=y[i]*l_i;
-    }
-    return p_n;
-}
 // Bai 4 co moc KHONG cach deu: dung ty sai phan f[x_i,...,x_(i+k)].
 // Khong duoc thay bang Delta^k y_i cua cong thuc moc cach deu.
 // Khi moc cach deu: f[x_i,...,x_(i+k)] = Delta^k y_i/(k!*h^k).
@@ -126,31 +115,17 @@ void bai4() {
     Day p=newton({-1,0,3,6,7},{3,-6,39,822,1611});inDaThuc("L_4",p);
     doiChieu("L_4(0.25)",giaTri(p,.25L),-1467.0L/256);
 }
-void bai7() {
-    cout << "\nBAI 7 - SAI SO NOI SUY SIN\n";
-    So pi=acos(-1.0L);Day x,y;
-    for(int d=0;d<=25;d+=5){So t=d*pi/180;x.push_back(t);y.push_back(sin(t));}
-    cout << "x*=12 do 30 phut=12.5 do; tinh bang radian\n";
-    So z=12.5L*pi/180,v=lagrangeTai(x,y,z),tich=1;
-    for(So t:x)tich*=z-t;
-    So chan=sin(25*pi/180)*abs(tich)/720;
-    So e=abs(v-sin(z));
-    cout << setprecision(15) << "p_5(x*)=" << v << "; sin=" << sin(z) << '\n';
-    cout << scientific << "|R_5(x*)| quan sat=" << e << "; chan ly thuyet=" << chan << '\n'
-              << fixed << setprecision(10);
-    if(e>chan+1e-15L)throw runtime_error("Sai so vuot chan");
-}
 int main() {
     cout << fixed << setprecision(10);
     cout << "BAI 9 SEMINAR 2 - CHUONG 2\n";
-    cout << "Cac bai 1, 2, 3, 4, 7: noi suy va sai so noi suy.\n";
+    cout << "Cac bai 1, 2, 3, 4: noi suy va sai so noi suy.\n";
     cout << "Ky hieu: p_n, l_i (Lagrange); L_n (Newton).\n";
     try {
-        bai1(); bai2(); bai3(); bai4(); bai7();
+        bai1(); bai2(); bai3(); bai4();
     } catch(const exception& e) {
         cerr << "Loi: " << e.what() << '\n';
         return 1;
     }
-    cout << "\nHoan thanh 5 bai thuoc Chuong 2.\n";
+    cout << "\nHoan thanh 4 bai thuoc Chuong 2.\n";
     return 0;
 }
